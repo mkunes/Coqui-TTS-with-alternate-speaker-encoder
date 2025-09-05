@@ -1,0 +1,264 @@
+---
+# General params
+run_name: "SPT-MGW.JMa_ECAPA-TDNN-VoxCeleb_alwaysSCL"
+run_description: "SPT-MGW.cs-CZ - JMa version, YourTTS, ECAPA-TDNN embeddings (VoxCeleb model), always SCL, no mixed precision"
+project_name: "TTS"
+output_path: "/storage/plzen4-ntis/home/mkunes/experiments/YourTTS_multispeaker/models"
+continue_path: ""
+restore_path: ""
+best_path: ""
+grad_accum_steps: 1     # Number of gradient accumulation steps. It is used to accumulate gradients over multiple batches (1)
+coqui_path: "/storage/plzen4-ntis/home/mkunes/GitHub/Coqui-TTS_jmaty_2023-11"
+trainer_path: "/storage/plzen4-ntis/home/mkunes/GitHub/Trainer_2023-11"
+
+# AUDIO PARAMS
+audio:
+    # STFT params
+    "fft_size": 1024        # number of STFT frequency levels. Size of the linear spectogram frame.
+    "win_length": 1024      # STFT window length
+    "hop_length": 256       # STFT window hop-lengh
+    # Audio processing parameters
+    "sample_rate": 24000    # DATASET-RELATED: wav sample-rate.
+    # MelSpectrogram params
+    "num_mels": 80          # size of the mel spec frame
+    "mel_fmin": 0           # DATASET-RELATED: minimum freq level for mel-spec. ~50 for male and ~95 for female voices.
+    "mel_fmax": 12000       # DATASET-RELATED: maximum freq level for mel-spec
+
+# DATASET
+# List of datasets. They all merged and they get different speaker_ids.
+datasets:
+    - "formatter": "artic_multispeaker"
+      "dataset_name": "SPT-MGW"
+      "path": "/storage/plzen4-ntis/home/mkunes/experiments/YourTTS_multispeaker/datasets/SPT-MGW.crop.JMa"
+      # "path": "/storage/plzen4-ntis/home/mkunes/experiments/YourTTS_multispeaker/datasets/SPT-MGW.mini"
+      "meta_file_train": "train.v231128.ph-redu.epa.pau2b0.csv" # "metadata_train.csv.redu_EPA"  # for vtck if list, ignore speakers id in list for train, its useful for test cloning with new speakers
+      "meta_file_val": "" #metadata_eval.csv.redu_EPA" #""    # Name of the dataset meta file that defines the instances used at validation.
+      "ignored_speakers": null              # List of speakers IDs that are not used at the training (None)
+      "language": "cs-CZ"                   # Language code of the dataset (None). If defined, it overrides `phoneme_language`.
+      "meta_file_attn_mask": ""             # Path to the file that lists the attention mask files used with models that require attention masks to train the duration predictor.
+
+# VOCABULARY PARAMS
+characters: # Defines character or phoneme set used by the model
+    "pad": "<PAD>"      # characters in place of empty padding (None)
+    "eos": "<EOS>"      # characters showing the end of a sentence (None)
+    "bos": "<BOS>"      # characters showing the beginning of a sentence (None)
+    "blank": "<BLNK>"   # optional character used between characters by some models for better prosody.
+    # character set used by the model. Characters not in this list are ignored when converting input text to a list of sequence IDs (None).
+    # "characters": "AÁÄBCČDĎEÉĚËFGHIÍJKLMNŇOÓÖPQRŘSŠTŤUÚŮÜVWXYÝZŽaáäbcčdďeéěëfghiíjklmnňoóöpqrřsštťuúůüvwxyýzž"    # Czech graphemes
+    "characters": "ACDEIJOPRSTUZabcdefghijklmnopqrstuvxz#$%@*Ç"  # reduced Czech phonetic alphabet EPA
+    # "characters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"  # ASCII
+    # characters considered as punctuation as parsing the input sentence (None)
+    # Must be defined when set `use_phoneme=True`!
+    "punctuations": "!,-.:;–()?ˈ„“”\"‚‘’ˌː… "
+    # characters considered as parsing phonemes (None)
+    # "phonemes": "iyɨʉɯuɪʏʊeøɘəɵɤoɛœɜɞʌɔæɐaɶɑɒᵻʘɓǀɗǃʄǂɠǁʛpbtdʈɖcɟkɡqɢʔɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟˈˌːˑʍwɥʜʢʡɕʑɺɧɚ˞ɫ"   # IPA phoneme set
+    "phonemes": null
+
+# VITS MODEL ARGS
+model_args:
+    "num_chars": null                        # Number of characters in the vocabulary (100)
+    "out_channels": 513                      # Number of output channels (513)
+    "spec_segment_size": 32                  # Decoder input segment size (32). `(32 * hoplength": waveform length)`.
+    "hidden_channels": 192                   # Number of hidden channels of the model (192)
+    "hidden_channels_ffn_text_encoder": 768  # Number of hidden channels of the feed-forward layers of the text encoder transformer (768)
+    "num_heads_text_encoder": 2              # Number of attention heads of the text encoder transformer (2)
+    "num_layers_text_encoder": 10            # Number of transformer layers in the text encoder (6)
+    "kernel_size_text_encoder": 3            # Kernel size of the text encoder transformer FFN layers (3)
+    "dropout_p_text_encoder": 0.1            # Dropout rate of the text encoder (0.1)
+    "dropout_p_duration_predictor": 0.5      # Dropout rate of the duration predictor (0.5)
+    "kernel_size_posterior_encoder": 5       # Kernel size of the posterior encoder's WaveNet layers (5)
+    "dilation_rate_posterior_encoder": 1     # Dilation rate of the posterior encoder's WaveNet layers (1)
+    "num_layers_posterior_encoder": 16       # Number of posterior encoder's WaveNet layers (16)
+    "kernel_size_flow": 5                    # Kernel size of the Residual Coupling layers of the flow network (5)
+    "dilation_rate_flow": 1                  # Dilation rate of the Residual Coupling WaveNet layers of the flow network (1)     
+    "num_layers_flow": 4                     # Number of Residual Coupling WaveNet layers of the flow network (4)
+    "resblock_type_decoder": "1"             # Type of the residual block in the decoder network ("1")
+    "resblock_kernel_sizes_decoder": [       # Kernel sizes of the residual blocks in the decoder network (`[3, 7, 11]`).
+        3, 7, 11
+    ]
+    "resblock_dilation_sizes_decoder":       # Dilation sizes of the residual blocks in the decoder network
+        - [1, 3, 5]                          # (`[[1, 3, 5], [1, 3, 5], [1, 3, 5]]`)
+        - [1, 3, 5]
+        - [1, 3, 5]
+    "upsample_rates_decoder": [8, 8, 2, 2]   # Upsampling rates for each concecutive upsampling layer in the decoder network.
+                                             # The multiply of these values must be equal to the kop length used for computing spectrograms
+                                             # (`[8, 8, 2, 2]`)
+    "upsample_initial_channel_decoder": 512  # Number of hidden channels of the first upsampling convolution layer of the decoder network (512)
+    "upsample_kernel_sizes_decoder": [       # Kernel sizes for each upsampling layer of the decoder network (`[16, 16, 4, 4]`)
+        16, 16, 4, 4
+    ]
+    "periods_multi_period_discriminator": [  # Periods values for Vits Multi-Period Discriminator (`[2, 3, 5, 7, 11]`)
+        2, 3, 5, 7, 11
+    ]
+    "use_sdp": true                         # Use Stochastic Duration Predictor (True)
+    "noise_scale": 1.0                      # Noise scale used for the sample noise tensor in training (1.0)
+    "inference_noise_scale": 0.667          # Noise scale used for the sample noise tensor in inference (0.667)
+    "length_scale": 1                       # Scale factor for the predicted duration values (1). Smaller values result faster speech.
+    "noise_scale_dp": 1.0                   # Noise scale used by the Stochastic Duration Predictor sample noise in training (1.0)
+    "inference_noise_scale_dp": 0.8         # Noise scale for the Stochastic Duration Predictor in inference (0.8)
+    "max_inference_len": null               # Maximum inference length to limit the memory use (None)
+    "init_discriminator": true              # Initialize the disciminator network if set True. Set False for inference.
+    "use_spectral_norm_disriminator": false # Use spectral normalization over weight norm in the discriminator (False)
+    "detach_dp_input": true                 # Detach duration predictor's input from the network for stopping the gradients (True)
+    "freeze_encoder": false                 # Freeze the encoder weigths during training (False)
+    "freeze_DP": false                      # Freeze the duration predictor weigths during training (False)
+    "freeze_PE": false                      # Freeze the posterior encoder weigths during training (False)
+    "freeze_flow_decoder": false            # Freeze the flow encoder weigths during training (False)
+    "freeze_waveform_decoder": false        # Freeze the waveform decoder weigths during training (False)
+    "encoder_sample_rate": null             # If not None this sample rate will be used for training the Posterior Encoder, flow, text_encoder and duration predictor.
+                                            # The decoder part (vocoder) will be trained with the `config.audio.sample_rate` (None).
+    "interpolate_z": true                   # If `encoder_sample_rate` not None and this parameter True the nearest interpolation will be used
+                                            # to upsampling the latent variable z with the sampling rate `encoder_sample_rate` to the `config.audio.sample_rate` (True).
+                                            # If it is False you will need to add extra `upsample_rates_decoder` to match the shape.
+    # MULTI-SPEAKER
+    "num_speakers": 0                       # Number of speakers for the speaker embedding layer
+    "use_speaker_embedding": false          # enable/disable using speaker embeddings for multi-speaker models (False). If set True, the model is in the multi-speaker mode.
+    "speakers_file": null                   # Path to the speaker mapping file for the Speaker Manager
+    "speaker_embedding_channels": 256       # Number of speaker embedding channels (256)    
+    "use_d_vector_file": true               # Enable/disable using external speaker embeddings in place of the learned embeddings (False)
+    "d_vector_file": [                       # Path to the file including pre-computed speaker embeddings (None)
+        "/storage/plzen4-ntis/home/mkunes/experiments/YourTTS_multispeaker/datasets/embeddings_ECAPA-TNN_VoxCeleb_pretrained_16k/SPT-MGW_ECAPA-TDNN_embeddings_VoxCelebModel-augment.json"
+    ]
+    "d_vector_dim": 192                     # Channels of external speaker embedding vectors (0)
+    "use_speaker_encoder_as_loss": true #true     # Enable/Disable Speaker Consistency Loss (SCL) (False)
+    # Path to the file speaker encoder config file, to use for SCL ("")
+    "speaker_encoder_config_path": "/storage/plzen4-ntis/home/mkunes/models/ECAPA-TDNN_augment_VoxCeleb_pretrained/1986/save/CKPT+2021-02-27+12-48-32+00/config_handmade.json" 
+    # Path to the file speaker encoder checkpoint file, to use for SCL ("").
+    "speaker_encoder_model_path": "/storage/plzen4-ntis/home/mkunes/models/ECAPA-TDNN_augment_VoxCeleb_pretrained/1986/save/CKPT+2021-02-27+12-48-32+00/" 
+    "condition_dp_on_speaker": true         # Condition the duration predictor on the speaker embedding (True)
+    # MULTI-LANGUAGE
+    "use_language_embedding": false     # Enable/Disable language embedding for multilingual models (False)
+    "embedded_language_dim": 4          # Number of language embedding channels (4)
+    "num_languages": 0                  # Number of languages for the language embedding layer (0)
+    "language_ids_file": null           # Path to the language mapping file for the Language Manager (None)
+
+# CONFIG
+model_config:
+    # DATA LOADING
+    "num_loader_workers": 2               # number of training data loader processes. Don't set it too big. 4-8 are good values.
+    "num_eval_loader_workers": 2          # number of evaluation data loader processes.
+    "text_cleaner": "no_cleaners"         # Name of the text cleaner used for cleaning and formatting transcripts.
+    "enable_eos_bos_chars": false         # enable/disable beginning of sentence and end of sentence chars.
+    "batch_group_size": 32                # Size of the batch groups used for bucketing. By default, the dataloader orders samples by the sequence
+                                          # length for a more efficient and stable training. If `batch_group_size > 1` then it performs bucketing to
+                                          # prevent using the same batches for each epoch.
+    "min_text_len": 1                     # Minimum length of input text to be used (0). All shorter samples will be ignored.
+    "max_text_len": 999                   # Maximum length of input text to be used (float("inf")). All longer samples will be ignored.
+    "min_audio_len": 7200                 # Minimum length of input audio to be used (0). All shorter samples will be ignored.
+    "max_audio_len": 720000               # Maximum length of input audio to be used (float("inf")). All longer samples will be ignored.
+                                          # The maximum length in the dataset defines the VRAM used in the training.
+                                          # Hence, pay attention to this value if you encounter an OOM error in training.
+                                          # For FS=22.050kHz and max audio length 16s: # 352800 = 22050 * 16
+    "start_by_longest": false             # Start by longest sequence. It is especially useful to check OOM (False)
+    "compute_input_seq_cache": true       # If true, text sequences are computed before starting training. If phonemes are enabled, they are also computed at this stage.
+    "use_noise_augment": false            # Augment the input audio with random noise
+    "add_blank": false                    # Add blank characters between each other two characters (True). It improves performance for some models at expense of slower run-time due to the longer input sequence.
+    "compute_linear_spec": true           # If True, the linear spectrogram is computed and returned alongside the mel output (True). Do not change.
+    "return_wav": true                    # If true, data loader returns the waveform as well as the other outputs (True). Do not change.
+    "compute_f0": false
+
+    # PHONEMES
+    # phoneme computation is slow, therefore, it caches results in the given folder
+    "phoneme_cache_path": "cache/VCTK/phoneme_cache_gruut"
+    "use_phonemes": false               # use phonemes instead of raw characters. It is suggested for better pronounciation.
+    "phonemizer": "gruut"
+    "phoneme_language": "en"            # depending on your target language, pick one from  https"://github.com/bootphon/phonemizer#languages
+
+    # DISTRIBUTED TRAINING
+    "distributed_backend": "gloo"
+    "distributed_url": "tcp://localhost:54321"
+
+    # TRAINING
+    "epochs": 295            # total number of epochs to train (10000)
+    "use_total_epochs": true  # JMa: Compute the number of epochs done as a total number across continue runs (False). If True, total number of epochs is added to checkpoint path.
+    "stop_after_steps": false # JMa: Stop training after defined step (False)
+    "steps": 1000000          # JMa: "Number of steps to stop training when `stop_after_steps` is True (1000000).
+    "batch_size": 32          # Batch size for training. Lower values than 32 might cause hard to learn attention.
+    "mixed_precision": false   # level of optimization with NVIDIA's apex feature for automatic mixed FP16/FP32 precision (AMP), NOTE": currently only O1 is supported, and use "O1" to activate.
+    "loss_masking": null
+
+    # VALIDATION
+    "run_eval": true              # Run evaluation after each epoch.
+    "eval_batch_size": 16         # Validation batch size.
+    "eval_split_max_size": 256    # Number maximum of samples to be used for evaluation in proportion split. Defaults to None (Disabled).
+    "eval_split_size": 0.01       # If between 0.0 and 1.0 represents the proportion of the dataset to include in the evaluation set. 
+                                  # If > 1, represents the absolute number of evaluation samples. Defaults to 0.01 (1%).
+    "test_delay_epochs": 1        # Until attention is aligned, testing only wastes computation time.
+    "test_epoch_step": 10         # JMa: Number of epochs to run test and generate testing files (1)
+    "save_test_files": true       # JMa: Save test files (False)
+    "test_sentences_file": null   # set a file to load sentences to be used for testing. If it is null then we use default english sentences.
+    "test_sentences":             # sentences to be used for testing
+        - ["$ rAno sem se probuDil, # a virazil na mIrJe raJI bjex. $", "spkr00001", None, "cs-CZ"]
+        - ["$ rAno sem se probuDil, # a virazil na mIrJe raJI bjex. $", "spkr00002", None, "cs-CZ"]
+        - ["$ rAno sem se probuDil, # a virazil na mIrJe raJI bjex. $", "spkr00003", None, "cs-CZ"]
+        - ["$ fCera sem si koupil novE boti, # a hrDe sem je vivjesil na stojan. $", "spkr00001", None, "cs-CZ"]
+        - ["$ fCera sem si koupil novE boti, # a hrDe sem je vivjesil na stojan. $", "spkr00002", None, "cs-CZ"]
+        - ["$ fCera sem si koupil novE boti, # a hrDe sem je vivjesil na stojan. $", "spkr00003", None, "cs-CZ"]
+        - ["$ je tohle opravdu dobrA sintEza? $", "spkr00001", None, "cs-CZ"]
+        - ["$ je tohle opravdu dobrA sintEza? $", "spkr00002", None, "cs-CZ"]
+        - ["$ je tohle opravdu dobrA sintEza? $", "spkr00003", None, "cs-CZ"]
+
+    # OPTIMIZER
+    "lr": 0.001                           # Learning rate for each optimizer (0.001)
+    "lr_scheduler": null                  # Learning rate scheduler(s) to use (None)
+    "lr_scheduler_params": null           # Learning rate scheduler(s) arguments (None)
+    "optimizer": "AdamW"                  # Optimizer used for the training.
+    "optimizer_params":                   # Optimizer kwargs.
+        "betas": [0.8, 0.99]
+        "eps": 0.000000001
+        "weight_decay": 0.01              # Weight decay weight.
+    "use_grad_scaler": false              # Enable/disable gradient scaler explicitly. It is enabled by default with AMP training (False)
+    "lr_gen": 0.0002                      # Initial learning rate for the generator (0.0002)
+    "lr_disc": 0.0002                     # Initial learning rate for the discriminator (0.0002)
+    "lr_scheduler_gen": "ExponentialLR"   # Name of the learning rate scheduler for the generator. One of the `torch.optim.lr_scheduler.*` (`ExponentialLR`).
+    "lr_scheduler_gen_params":            # Parameters for the learning rate scheduler of the generator. Defaults to `{'gamma'": 0.999875, "last_epoch":-1}`.
+        "gamma": 0.999875
+        "last_epoch": -1
+    "lr_scheduler_disc": "ExponentialLR"  # Name of the learning rate scheduler for the discriminator. One of the `torch.optim.lr_scheduler.*` (`ExponentialLR`).
+    "lr_scheduler_disc_params":           # Parameters for the learning rate scheduler of the generator. Defaults to `{'gamma'": 0.999875, "last_epoch":-1}`.
+        "gamma": 0.999875
+        "last_epoch": -1
+    "grad_clip":  [5, 5]                  # Gradient clipping thresholds for each optimizer
+    "scheduler_after_epoch": true         # If true, step the scheduler after each epoch else after each step (True).
+    "target_loss": "loss_1"
+
+    # LOSS PARAMS
+    "kl_loss_alpha": 1.0     # Loss weight for KL loss (1.0)
+    "disc_loss_alpha": 1.0   # Loss weight for the discriminator loss (1.0)
+    "gen_loss_alpha": 1.0    # Loss weight for the generator loss (1.0)
+    "feat_loss_alpha": 1.0   # Loss weight for the feature matching loss (1.0)
+    "mel_loss_alpha": 45.0   # Loss weight for the mel loss (45.0)
+    "dur_loss_alpha": 1.0    # Loss weight for duration loss (1.0)
+    "speaker_encoder_loss_alpha": 9.0 # Speaker Consistency Loss (SCL) α to 9 like the paper
+
+    # SAMPLE BALANCING
+    "use_language_weighted_sampler": false  # Enable/Disable the batch balancer by language (False)
+    "language_weighted_sampler_alpha": 1.0  # Number that control the influence of the language sampler weights (1.0)
+    "use_length_weighted_sampler": false    # Enable/Disable the batch balancer by audio length (False). If enabled the dataset will be divided into 10 buckets
+                                            # considering the min and max audio of the dataset. The sampler weights will be computed forcing to have
+                                            # the same quantity of data for each bucket in each training batch.
+    "length_weighted_sampler_alpha": 1.0    # Number that control the influence of the length sampler weights (1.0)
+    "use_weighted_sampler": false           # If true, use weighted sampler with bucketing for balancing samples between datasets used in training (`False`).
+    # Ensures that all speakers are seen in the training batch equally no matter how many samples each speaker has
+    "weighted_sampler_attrs":               # Key retuned by the formatter to be used for weighted sampler.
+        "speaker_name": 1.0                 # For example `{"root_path": 2.0, "speaker_name": 1.0}` sets sample probabilities by overweighting `root_path` by 2.0 (`{}`)
+    "weighted_sampler_multipliers": {}      # Weight each unique value of a key returned by the formatter for weighted sampling.
+                                            # For example `{"root_path":{"/raid/datasets/libritts-clean-16khz-bwe-coqui_44khz/LibriTTS/train-clean-100/":1.0,
+                                            #               "/raid/datasets/libritts-clean-16khz-bwe-coqui_44khz/LibriTTS/train-clean-360/": 0.5}`.
+                                            # It will sample instances from `train-clean-100` 2 times more than `train-clean-360 (`{}`) 
+
+    # TENSORBOARD, LOGGING & CHECKPOINTING
+    "print_step": 100                 # Number of steps to log training on console.
+    "plot_step": 100                  # Number of steps required to print the next training log.
+    "dashboard_logger": "tensorboard" # "tensorboard" or "wandb"
+    "print_eval": true                # If True, it prints intermediate loss values in evalulation
+    "save_checkpoints": true          # If true, it saves checkpoints per "save_step"
+    "save_step": 5000                 # Number of training steps expected to save training stats and checkpoints (10000)
+    "save_epoch": 1                   # Number of training epochs expected to save training stats and checkpoints (25). Used instead of `save_steps` when `use_total_epochs == True`.
+    "log_model_step": null            # Save checkpoint to the logger every `log_model_step`` steps (None). If not defined `log_model_step == save_step`.
+    "log_model_epoch": null           # Save checkpoint to the logger every `log_model_epoch`` epochs (None). If not defined `log_model_epoch == save_epoch`. Used instead of `log_model_step` when `use_total_epochs == True`.
+    "save_n_checkpoints": 3           # Keep n local checkpoints (5).
+    "save_all_best": false            # If true, save all best checkpoints and keep the older ones.
+    "save_best_after": 10000          # Global step after which to save best models if save_all_best is true (10000)
+    "model_param_stats": false        # Enable/Disable logging internal model stats for model diagnostic. It might be useful for model debugging. Defaults to False.
+    "log_test_files": false           # JMa: Log test files (True)

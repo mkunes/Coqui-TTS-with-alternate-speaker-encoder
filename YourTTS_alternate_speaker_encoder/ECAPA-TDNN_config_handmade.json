@@ -1,0 +1,23 @@
+{
+    "model": "speaker_encoder",
+    "run_name": "ECAPA-TDNN",
+    "run_description": "pre-trained ECAPA-TDNN speaker encoder (manually created json config with only the bare minimum)",
+    "audio": {
+        "sample_rate": 16000
+    },
+    "audio_config": {
+        "sample_rate": 16000
+    },
+    "datasets": [
+    ],
+    "model_params": {
+        "model_name": "speechbrain", // MK: I don't think "model_name" is even used for anything - SpeechBrain encoders do not go through TTS.encoder.utils.setup_encoder_model(), which seems to be the only code that checks this setting
+        "model_path": "/storage/plzen4-ntis/home/mkunes/models/ECAPA-TDNN_augment_VoxCeleb_pretrained/1986/save/CKPT+2021-02-27+12-48-32+00",
+        "hparams_path": "/storage/plzen4-ntis/home/mkunes/models/ECAPA-TDNN_augment_VoxCeleb_pretrained/1986/save/CKPT+2021-02-27+12-48-32+00/hyperparams.yaml"
+    },
+
+    "num_loader_workers": 0,
+    "num_val_loader_workers": 0,
+    "num_classes_in_batch": 100,
+    "num_utter_per_class": 4
+}

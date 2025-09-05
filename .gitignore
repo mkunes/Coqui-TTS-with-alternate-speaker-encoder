@@ -1,3 +1,11 @@
+#---
+# Ignore specific paths
+#---
+
+YourTTS_alternate_speaker_encoder/pretrained_models/**
+
+#----------
+
 WadaSNR/
 .idea/
 *.pyc
